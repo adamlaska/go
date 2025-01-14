@@ -69,9 +69,14 @@ void _cgo_sys_thread_start(ThreadStart *ts);
 uintptr_t _cgo_wait_runtime_init_done(void);
 
 /*
+ * Get the low and high boundaries of the stack.
+ */
+void x_cgo_getstackbound(uintptr bounds[2]);
+
+/*
  * Prints error then calls abort. For linux and android.
  */
-void fatalf(const char* format, ...);
+void fatalf(const char* format, ...) __attribute__ ((noreturn));
 
 /*
  * Registers the current mach thread port for EXC_BAD_ACCESS processing.

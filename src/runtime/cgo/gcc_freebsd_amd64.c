@@ -17,17 +17,17 @@ static void (*setg_gcc)(void*);
 void
 x_cgo_init(G *g, void (*setg)(void*))
 {
-	pthread_attr_t *attr;
+	uintptr *pbounds;
 
 	// Deal with memory sanitizer/clang interaction.
 	// See gcc_linux_amd64.c for details.
 	setg_gcc = setg;
-	attr = (pthread_attr_t*)malloc(sizeof *attr);
-	if (attr == NULL) {
+	pbounds = (uintptr*)malloc(2 * sizeof(uintptr));
+	if (pbounds == NULL) {
 		fatalf("malloc failed: %s", strerror(errno));
 	}
-	_cgo_set_stacklo(g, attr);
-	free(attr);
+	_cgo_set_stacklo(g, pbounds);
+	free(pbounds);
 }
 
 void
@@ -43,6 +43,7 @@ _cgo_sys_thread_start(ThreadStart *ts)
 	pthread_sigmask(SIG_SETMASK, &ign, &oset);
 
 	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 	pthread_attr_getstacksize(&attr, &size);
 	// Leave stacklo=0 and set stackhi=size; mstart will do the rest.
 	ts->g->stackhi = size;

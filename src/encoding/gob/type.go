@@ -8,6 +8,7 @@ import (
 	"encoding"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"reflect"
 	"sync"
@@ -24,7 +25,7 @@ type userTypeInfo struct {
 	base        reflect.Type // the base type after all indirections
 	indir       int          // number of indirections to reach the base type
 	externalEnc int          // xGob, xBinary, or xText
-	externalDec int          // xGob, xBinary or xText
+	externalDec int          // xGob, xBinary, or xText
 	encIndir    int8         // number of indirections to reach the receiver type; may be negative
 	decIndir    int8         // number of indirections to reach the receiver type; may be negative
 }
@@ -173,9 +174,18 @@ type gobType interface {
 	safeString(seen map[typeId]bool) string
 }
 
-var types = make(map[reflect.Type]gobType, 32)
-var idToType = make([]gobType, 1, firstUserId)
-var builtinIdToTypeSlice [firstUserId]gobType // set in init() after builtins are established
+var (
+	types                = make(map[reflect.Type]gobType, 32)
+	idToTypeSlice        = make([]gobType, 1, firstUserId)
+	builtinIdToTypeSlice [firstUserId]gobType // set in init() after builtins are established
+)
+
+func idToType(id typeId) gobType {
+	if id < 0 || int(id) >= len(idToTypeSlice) {
+		return nil
+	}
+	return idToTypeSlice[id]
+}
 
 func builtinIdToType(id typeId) gobType {
 	if id < 0 || int(id) >= len(builtinIdToTypeSlice) {
@@ -189,16 +199,16 @@ func setTypeId(typ gobType) {
 	if typ.id() != 0 {
 		return
 	}
-	nextId := typeId(len(idToType))
+	nextId := typeId(len(idToTypeSlice))
 	typ.setId(nextId)
-	idToType = append(idToType, typ)
+	idToTypeSlice = append(idToTypeSlice, typ)
 }
 
 func (t typeId) gobType() gobType {
 	if t == 0 {
 		return nil
 	}
-	return idToType[t]
+	return idToType(t)
 }
 
 // string returns the string representation of the type associated with the typeId.
@@ -277,14 +287,14 @@ func init() {
 	checkId(21, mustGetTypeInfo(reflect.TypeFor[fieldType]()).id)
 	checkId(23, mustGetTypeInfo(reflect.TypeFor[mapType]()).id)
 
-	copy(builtinIdToTypeSlice[:], idToType)
+	copy(builtinIdToTypeSlice[:], idToTypeSlice)
 
 	// Move the id space upwards to allow for growth in the predefined world
 	// without breaking existing files.
-	if nextId := len(idToType); nextId > firstUserId {
+	if nextId := len(idToTypeSlice); nextId > firstUserId {
 		panic(fmt.Sprintln("nextId too large:", nextId))
 	}
-	idToType = idToType[:firstUserId]
+	idToTypeSlice = idToTypeSlice[:firstUserId]
 	registerBasics()
 	wireTypeUserInfo = userType(wireTypeType)
 }
@@ -526,7 +536,7 @@ func newTypeObject(name string, ut *userTypeInfo, rt reflect.Type) (gobType, err
 	case reflect.Struct:
 		st := newStructType(name)
 		types[rt] = st
-		idToType[st.id()] = st
+		idToTypeSlice[st.id()] = st
 		for i := 0; i < t.NumField(); i++ {
 			f := t.Field(i)
 			if !isSent(&f) {
@@ -580,6 +590,7 @@ func isSent(field *reflect.StructField) bool {
 	if typ.Kind() == reflect.Chan || typ.Kind() == reflect.Func {
 		return false
 	}
+
 	return true
 }
 
@@ -769,10 +780,7 @@ func buildTypeInfo(ut *userTypeInfo, rt reflect.Type) (*typeInfo, error) {
 
 	// Create new map with old contents plus new entry.
 	m, _ := typeInfoMap.Load().(map[reflect.Type]*typeInfo)
-	newm := make(map[reflect.Type]*typeInfo, len(m))
-	for k, v := range m {
-		newm[k] = v
-	}
+	newm := maps.Clone(m)
 	newm[rt] = info
 	typeInfoMap.Store(newm)
 	return info, nil
@@ -819,7 +827,7 @@ var (
 	concreteTypeToName sync.Map // map[reflect.Type]string
 )
 
-// RegisterName is like Register but uses the provided name rather than the
+// RegisterName is like [Register] but uses the provided name rather than the
 // type's default.
 func RegisterName(name string, value any) {
 	if name == "" {

@@ -4,6 +4,13 @@
 
 //go:build unix
 
+// When cross-compiling with clang to linux/armv5, atomics are emulated
+// and cause a compiler warning. This results in a build failure since
+// cgo uses -Werror. See #65290.
+#pragma GCC diagnostic ignored "-Wpragmas"
+#pragma GCC diagnostic ignored "-Wunknown-warning-option"
+#pragma GCC diagnostic ignored "-Watomic-alignment"
+
 #include <pthread.h>
 #include <errno.h>
 #include <stdio.h>
@@ -30,8 +37,12 @@ static void (*cgo_context_function)(struct context_arg*);
 
 void
 x_cgo_sys_thread_create(void* (*func)(void*), void* arg) {
+	pthread_attr_t attr;
 	pthread_t p;
-	int err = _cgo_try_pthread_create(&p, NULL, func, arg);
+
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+	int err = _cgo_try_pthread_create(&p, &attr, func, arg);
 	if (err != 0) {
 		fprintf(stderr, "pthread_create failed: %s", strerror(err));
 		abort();
@@ -85,20 +96,18 @@ _cgo_wait_runtime_init_done(void) {
 // _cgo_set_stacklo sets g->stacklo based on the stack size.
 // This is common code called from x_cgo_init, which is itself
 // called by rt0_go in the runtime package.
-void _cgo_set_stacklo(G *g, pthread_attr_t *pattr)
+void _cgo_set_stacklo(G *g, uintptr *pbounds)
 {
-	pthread_attr_t attr;
-	size_t size;
+	uintptr bounds[2];
 
-	// pattr can be passed in by the caller; see gcc_linux_amd64.c.
-	if (pattr == NULL) {
-		pattr = &attr;
+	// pbounds can be passed in by the caller; see gcc_linux_amd64.c.
+	if (pbounds == NULL) {
+		pbounds = &bounds[0];
 	}
 
-	pthread_attr_init(pattr);
-	pthread_attr_getstacksize(pattr, &size);
+	x_cgo_getstackbound(pbounds);
 
-	g->stacklo = (uintptr)(__builtin_frame_address(0)) - size + 4096;
+	g->stacklo = *pbounds;
 
 	// Sanity check the results now, rather than getting a
 	// morestack on g0 crash.
@@ -106,8 +115,6 @@ void _cgo_set_stacklo(G *g, pthread_attr_t *pattr)
 		fprintf(stderr, "runtime/cgo: bad stack bounds: lo=%p hi=%p\n", (void*)(g->stacklo), (void*)(g->stackhi));
 		abort();
 	}
-
-	pthread_attr_destroy(pattr);
 }
 
 // Store the g into a thread-specific value associated with the pthread key pthread_g.
@@ -150,7 +157,6 @@ _cgo_try_pthread_create(pthread_t* thread, const pthread_attr_t* attr, void* (*p
 	for (tries = 0; tries < 20; tries++) {
 		err = pthread_create(thread, attr, pfn, arg);
 		if (err == 0) {
-			pthread_detach(*thread);
 			return 0;
 		}
 		if (err != EAGAIN) {

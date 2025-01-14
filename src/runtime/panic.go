@@ -7,8 +7,9 @@ package runtime
 import (
 	"internal/abi"
 	"internal/goarch"
-	"runtime/internal/atomic"
-	"runtime/internal/sys"
+	"internal/runtime/atomic"
+	"internal/runtime/sys"
+	"internal/stringslite"
 	"unsafe"
 )
 
@@ -53,7 +54,7 @@ const (
 // pc should be the program counter of the compiler-generated code that
 // triggered this panic.
 func panicCheck1(pc uintptr, msg string) {
-	if goarch.IsWasm == 0 && hasPrefix(funcname(findfunc(pc)), "runtime.") {
+	if goarch.IsWasm == 0 && stringslite.HasPrefix(funcname(findfunc(pc)), "runtime.") {
 		// Note: wasm can't tail call, so we can't get the original caller's pc.
 		throw(msg)
 	}
@@ -110,13 +111,13 @@ func panicCheck2(err string) {
 //
 //go:yeswritebarrierrec
 func goPanicIndex(x int, y int) {
-	panicCheck1(getcallerpc(), "index out of range")
+	panicCheck1(sys.GetCallerPC(), "index out of range")
 	panic(boundsError{x: int64(x), signed: true, y: y, code: boundsIndex})
 }
 
 //go:yeswritebarrierrec
 func goPanicIndexU(x uint, y int) {
-	panicCheck1(getcallerpc(), "index out of range")
+	panicCheck1(sys.GetCallerPC(), "index out of range")
 	panic(boundsError{x: int64(x), signed: false, y: y, code: boundsIndex})
 }
 
@@ -124,25 +125,25 @@ func goPanicIndexU(x uint, y int) {
 //
 //go:yeswritebarrierrec
 func goPanicSliceAlen(x int, y int) {
-	panicCheck1(getcallerpc(), "slice bounds out of range")
+	panicCheck1(sys.GetCallerPC(), "slice bounds out of range")
 	panic(boundsError{x: int64(x), signed: true, y: y, code: boundsSliceAlen})
 }
 
 //go:yeswritebarrierrec
 func goPanicSliceAlenU(x uint, y int) {
-	panicCheck1(getcallerpc(), "slice bounds out of range")
+	panicCheck1(sys.GetCallerPC(), "slice bounds out of range")
 	panic(boundsError{x: int64(x), signed: false, y: y, code: boundsSliceAlen})
 }
 
 //go:yeswritebarrierrec
 func goPanicSliceAcap(x int, y int) {
-	panicCheck1(getcallerpc(), "slice bounds out of range")
+	panicCheck1(sys.GetCallerPC(), "slice bounds out of range")
 	panic(boundsError{x: int64(x), signed: true, y: y, code: boundsSliceAcap})
 }
 
 //go:yeswritebarrierrec
 func goPanicSliceAcapU(x uint, y int) {
-	panicCheck1(getcallerpc(), "slice bounds out of range")
+	panicCheck1(sys.GetCallerPC(), "slice bounds out of range")
 	panic(boundsError{x: int64(x), signed: false, y: y, code: boundsSliceAcap})
 }
 
@@ -150,57 +151,57 @@ func goPanicSliceAcapU(x uint, y int) {
 //
 //go:yeswritebarrierrec
 func goPanicSliceB(x int, y int) {
-	panicCheck1(getcallerpc(), "slice bounds out of range")
+	panicCheck1(sys.GetCallerPC(), "slice bounds out of range")
 	panic(boundsError{x: int64(x), signed: true, y: y, code: boundsSliceB})
 }
 
 //go:yeswritebarrierrec
 func goPanicSliceBU(x uint, y int) {
-	panicCheck1(getcallerpc(), "slice bounds out of range")
+	panicCheck1(sys.GetCallerPC(), "slice bounds out of range")
 	panic(boundsError{x: int64(x), signed: false, y: y, code: boundsSliceB})
 }
 
 // failures in the comparisons for s[::x], 0 <= x <= y (y == len(s) or cap(s))
 func goPanicSlice3Alen(x int, y int) {
-	panicCheck1(getcallerpc(), "slice bounds out of range")
+	panicCheck1(sys.GetCallerPC(), "slice bounds out of range")
 	panic(boundsError{x: int64(x), signed: true, y: y, code: boundsSlice3Alen})
 }
 func goPanicSlice3AlenU(x uint, y int) {
-	panicCheck1(getcallerpc(), "slice bounds out of range")
+	panicCheck1(sys.GetCallerPC(), "slice bounds out of range")
 	panic(boundsError{x: int64(x), signed: false, y: y, code: boundsSlice3Alen})
 }
 func goPanicSlice3Acap(x int, y int) {
-	panicCheck1(getcallerpc(), "slice bounds out of range")
+	panicCheck1(sys.GetCallerPC(), "slice bounds out of range")
 	panic(boundsError{x: int64(x), signed: true, y: y, code: boundsSlice3Acap})
 }
 func goPanicSlice3AcapU(x uint, y int) {
-	panicCheck1(getcallerpc(), "slice bounds out of range")
+	panicCheck1(sys.GetCallerPC(), "slice bounds out of range")
 	panic(boundsError{x: int64(x), signed: false, y: y, code: boundsSlice3Acap})
 }
 
 // failures in the comparisons for s[:x:y], 0 <= x <= y
 func goPanicSlice3B(x int, y int) {
-	panicCheck1(getcallerpc(), "slice bounds out of range")
+	panicCheck1(sys.GetCallerPC(), "slice bounds out of range")
 	panic(boundsError{x: int64(x), signed: true, y: y, code: boundsSlice3B})
 }
 func goPanicSlice3BU(x uint, y int) {
-	panicCheck1(getcallerpc(), "slice bounds out of range")
+	panicCheck1(sys.GetCallerPC(), "slice bounds out of range")
 	panic(boundsError{x: int64(x), signed: false, y: y, code: boundsSlice3B})
 }
 
 // failures in the comparisons for s[x:y:], 0 <= x <= y
 func goPanicSlice3C(x int, y int) {
-	panicCheck1(getcallerpc(), "slice bounds out of range")
+	panicCheck1(sys.GetCallerPC(), "slice bounds out of range")
 	panic(boundsError{x: int64(x), signed: true, y: y, code: boundsSlice3C})
 }
 func goPanicSlice3CU(x uint, y int) {
-	panicCheck1(getcallerpc(), "slice bounds out of range")
+	panicCheck1(sys.GetCallerPC(), "slice bounds out of range")
 	panic(boundsError{x: int64(x), signed: false, y: y, code: boundsSlice3C})
 }
 
 // failures in the conversion ([x]T)(s) or (*[x]T)(s), 0 <= x <= y, y == len(s)
 func goPanicSliceConvert(x int, y int) {
-	panicCheck1(getcallerpc(), "slice length too short to convert to array or pointer to array")
+	panicCheck1(sys.GetCallerPC(), "slice length too short to convert to array or pointer to array")
 	panic(boundsError{x: int64(x), signed: true, y: y, code: boundsConvert})
 }
 
@@ -228,7 +229,7 @@ var shiftError = error(errorString("negative shift amount"))
 
 //go:yeswritebarrierrec
 func panicshift() {
-	panicCheck1(getcallerpc(), "negative shift amount")
+	panicCheck1(sys.GetCallerPC(), "negative shift amount")
 	panic(shiftError)
 }
 
@@ -279,11 +280,11 @@ func deferproc(fn func()) {
 	d.link = gp._defer
 	gp._defer = d
 	d.fn = fn
-	d.pc = getcallerpc()
-	// We must not be preempted between calling getcallersp and
-	// storing it to d.sp because getcallersp's result is a
+	d.pc = sys.GetCallerPC()
+	// We must not be preempted between calling GetCallerSP and
+	// storing it to d.sp because GetCallerSP's result is a
 	// uintptr stack pointer.
-	d.sp = getcallersp()
+	d.sp = sys.GetCallerSP()
 
 	// deferproc returns 0 normally.
 	// a deferred func that stops a panic
@@ -294,6 +295,176 @@ func deferproc(fn func()) {
 	return0()
 	// No code can go here - the C return register has
 	// been set and must not be clobbered.
+}
+
+var rangeDoneError = error(errorString("range function continued iteration after function for loop body returned false"))
+var rangePanicError = error(errorString("range function continued iteration after loop body panic"))
+var rangeExhaustedError = error(errorString("range function continued iteration after whole loop exit"))
+var rangeMissingPanicError = error(errorString("range function recovered a loop body panic and did not resume panicking"))
+
+//go:noinline
+func panicrangestate(state int) {
+	switch abi.RF_State(state) {
+	case abi.RF_DONE:
+		panic(rangeDoneError)
+	case abi.RF_PANIC:
+		panic(rangePanicError)
+	case abi.RF_EXHAUSTED:
+		panic(rangeExhaustedError)
+	case abi.RF_MISSING_PANIC:
+		panic(rangeMissingPanicError)
+	}
+	throw("unexpected state passed to panicrangestate")
+}
+
+// deferrangefunc is called by functions that are about to
+// execute a range-over-function loop in which the loop body
+// may execute a defer statement. That defer needs to add to
+// the chain for the current function, not the func literal synthesized
+// to represent the loop body. To do that, the original function
+// calls deferrangefunc to obtain an opaque token representing
+// the current frame, and then the loop body uses deferprocat
+// instead of deferproc to add to that frame's defer lists.
+//
+// The token is an 'any' with underlying type *atomic.Pointer[_defer].
+// It is the atomically-updated head of a linked list of _defer structs
+// representing deferred calls. At the same time, we create a _defer
+// struct on the main g._defer list with d.head set to this head pointer.
+//
+// The g._defer list is now a linked list of deferred calls,
+// but an atomic list hanging off:
+//
+//		g._defer => d4 -> d3 -> drangefunc -> d2 -> d1 -> nil
+//	                             | .head
+//	                             |
+//	                             +--> dY -> dX -> nil
+//
+// with each -> indicating a d.link pointer, and where drangefunc
+// has the d.rangefunc = true bit set.
+// Note that the function being ranged over may have added
+// its own defers (d4 and d3), so drangefunc need not be at the
+// top of the list when deferprocat is used. This is why we pass
+// the atomic head explicitly.
+//
+// To keep misbehaving programs from crashing the runtime,
+// deferprocat pushes new defers onto the .head list atomically.
+// The fact that it is a separate list from the main goroutine
+// defer list means that the main goroutine's defers can still
+// be handled non-atomically.
+//
+// In the diagram, dY and dX are meant to be processed when
+// drangefunc would be processed, which is to say the defer order
+// should be d4, d3, dY, dX, d2, d1. To make that happen,
+// when defer processing reaches a d with rangefunc=true,
+// it calls deferconvert to atomically take the extras
+// away from d.head and then adds them to the main list.
+//
+// That is, deferconvert changes this list:
+//
+//		g._defer => drangefunc -> d2 -> d1 -> nil
+//	                 | .head
+//	                 |
+//	                 +--> dY -> dX -> nil
+//
+// into this list:
+//
+//	g._defer => dY -> dX -> d2 -> d1 -> nil
+//
+// It also poisons *drangefunc.head so that any future
+// deferprocat using that head will throw.
+// (The atomic head is ordinary garbage collected memory so that
+// it's not a problem if user code holds onto it beyond
+// the lifetime of drangefunc.)
+//
+// TODO: We could arrange for the compiler to call into the
+// runtime after the loop finishes normally, to do an eager
+// deferconvert, which would catch calling the loop body
+// and having it defer after the loop is done. If we have a
+// more general catch of loop body misuse, though, this
+// might not be worth worrying about in addition.
+//
+// See also ../cmd/compile/internal/rangefunc/rewrite.go.
+func deferrangefunc() any {
+	gp := getg()
+	if gp.m.curg != gp {
+		// go code on the system stack can't defer
+		throw("defer on system stack")
+	}
+
+	d := newdefer()
+	d.link = gp._defer
+	gp._defer = d
+	d.pc = sys.GetCallerPC()
+	// We must not be preempted between calling GetCallerSP and
+	// storing it to d.sp because GetCallerSP's result is a
+	// uintptr stack pointer.
+	d.sp = sys.GetCallerSP()
+
+	d.rangefunc = true
+	d.head = new(atomic.Pointer[_defer])
+
+	return d.head
+}
+
+// badDefer returns a fixed bad defer pointer for poisoning an atomic defer list head.
+func badDefer() *_defer {
+	return (*_defer)(unsafe.Pointer(uintptr(1)))
+}
+
+// deferprocat is like deferproc but adds to the atomic list represented by frame.
+// See the doc comment for deferrangefunc for details.
+func deferprocat(fn func(), frame any) {
+	head := frame.(*atomic.Pointer[_defer])
+	if raceenabled {
+		racewritepc(unsafe.Pointer(head), sys.GetCallerPC(), abi.FuncPCABIInternal(deferprocat))
+	}
+	d1 := newdefer()
+	d1.fn = fn
+	for {
+		d1.link = head.Load()
+		if d1.link == badDefer() {
+			throw("defer after range func returned")
+		}
+		if head.CompareAndSwap(d1.link, d1) {
+			break
+		}
+	}
+
+	// Must be last - see deferproc above.
+	return0()
+}
+
+// deferconvert converts the rangefunc defer list of d0 into an ordinary list
+// following d0.
+// See the doc comment for deferrangefunc for details.
+func deferconvert(d0 *_defer) {
+	head := d0.head
+	if raceenabled {
+		racereadpc(unsafe.Pointer(head), sys.GetCallerPC(), abi.FuncPCABIInternal(deferconvert))
+	}
+	tail := d0.link
+	d0.rangefunc = false
+
+	var d *_defer
+	for {
+		d = head.Load()
+		if head.CompareAndSwap(d, badDefer()) {
+			break
+		}
+	}
+	if d == nil {
+		return
+	}
+	for d1 := d; ; d1 = d1.link {
+		d1.sp = d0.sp
+		d1.pc = d0.pc
+		if d1.link == nil {
+			d1.link = tail
+			break
+		}
+	}
+	d0.link = d
+	return
 }
 
 // deferprocStack queues a new deferred function with a defer record on the stack.
@@ -312,12 +483,14 @@ func deferprocStack(d *_defer) {
 	// The other fields are junk on entry to deferprocStack and
 	// are initialized here.
 	d.heap = false
-	d.sp = getcallersp()
-	d.pc = getcallerpc()
+	d.rangefunc = false
+	d.sp = sys.GetCallerSP()
+	d.pc = sys.GetCallerPC()
 	// The lines below implement:
 	//   d.panic = nil
 	//   d.fd = nil
 	//   d.link = gp._defer
+	//   d.head = nil
 	//   gp._defer = d
 	// But without write barriers. The first three are writes to
 	// the stack so they don't need a write barrier, and furthermore
@@ -326,6 +499,7 @@ func deferprocStack(d *_defer) {
 	// explicitly mark all the defer structures, so we don't need to
 	// keep track of pointers to them with a write barrier.
 	*(*uintptr)(unsafe.Pointer(&d.link)) = uintptr(unsafe.Pointer(gp._defer))
+	*(*uintptr)(unsafe.Pointer(&d.head)) = 0
 	*(*uintptr)(unsafe.Pointer(&gp._defer)) = uintptr(unsafe.Pointer(d))
 
 	return0()
@@ -368,22 +542,18 @@ func newdefer() *_defer {
 	return d
 }
 
-// Free the given defer.
-// The defer cannot be used after this call.
-//
-// This is nosplit because the incoming defer is in a perilous state.
-// It's not on any defer list, so stack copying won't adjust stack
-// pointers in it (namely, d.link). Hence, if we were to copy the
-// stack, d could then contain a stale pointer.
-//
-//go:nosplit
-func freedefer(d *_defer) {
+// popDefer pops the head of gp's defer list and frees it.
+func popDefer(gp *g) {
+	d := gp._defer
+	d.fn = nil // Can in theory point to the stack
+	// We must not copy the stack between the updating gp._defer and setting
+	// d.link to nil. Between these two steps, d is not on any defer list, so
+	// stack copying won't adjust stack pointers in it (namely, d.link). Hence,
+	// if we were to copy the stack, d could then contain a stale pointer.
+	gp._defer = d.link
 	d.link = nil
 	// After this point we can copy the stack.
 
-	if d.fn != nil {
-		freedeferfn()
-	}
 	if !d.heap {
 		return
 	}
@@ -419,13 +589,6 @@ func freedefer(d *_defer) {
 	mp, pp = nil, nil
 }
 
-// Separate function so that it can split stack.
-// Windows otherwise runs out of stack space.
-func freedeferfn() {
-	// fn must be cleared before d is unlinked from gp.
-	throw("freedefer with d.fn != nil")
-}
-
 // deferreturn runs deferred functions for the caller's frame.
 // The compiler inserts a call to this at the end of any
 // function which calls defer.
@@ -433,7 +596,7 @@ func deferreturn() {
 	var p _panic
 	p.deferreturn = true
 
-	p.start(getcallerpc(), unsafe.Pointer(getcallersp()))
+	p.start(sys.GetCallerPC(), unsafe.Pointer(sys.GetCallerSP()))
 	for {
 		fn, ok := p.nextDefer()
 		if !ok {
@@ -451,13 +614,15 @@ func deferreturn() {
 // without func main returning. Since func main has not returned,
 // the program continues execution of other goroutines.
 // If all other goroutines exit, the program crashes.
+//
+// It crashes if called from a thread not created by the Go runtime.
 func Goexit() {
 	// Create a panic object for Goexit, so we can recognize when it might be
 	// bypassed by a recover().
 	var p _panic
 	p.goexit = true
 
-	p.start(getcallerpc(), unsafe.Pointer(getcallersp()))
+	p.start(sys.GetCallerPC(), unsafe.Pointer(sys.GetCallerSP()))
 	for {
 		fn, ok := p.nextDefer()
 		if !ok {
@@ -507,7 +672,7 @@ func printpanics(p *_panic) {
 		return
 	}
 	print("panic: ")
-	printany(p.arg)
+	printpanicval(p.arg)
 	if p.recovered {
 		print(" [recovered]")
 	}
@@ -517,20 +682,18 @@ func printpanics(p *_panic) {
 // readvarintUnsafe reads the uint32 in varint format starting at fd, and returns the
 // uint32 and a pointer to the byte following the varint.
 //
-// There is a similar function runtime.readvarint, which takes a slice of bytes,
-// rather than an unsafe pointer. These functions are duplicated, because one of
-// the two use cases for the functions would get slower if the functions were
-// combined.
+// The implementation is the same with runtime.readvarint, except that this function
+// uses unsafe.Pointer for speed.
 func readvarintUnsafe(fd unsafe.Pointer) (uint32, unsafe.Pointer) {
 	var r uint32
 	var shift int
 	for {
-		b := *(*uint8)((unsafe.Pointer(fd)))
+		b := *(*uint8)(fd)
 		fd = add(fd, unsafe.Sizeof(b))
 		if b < 128 {
 			return r + uint32(b)<<shift, fd
 		}
-		r += ((uint32(b) &^ 128) << shift)
+		r += uint32(b&0x7F) << (shift & 31)
 		shift += 7
 		if shift > 28 {
 			panic("Bad varint")
@@ -559,6 +722,18 @@ func (*PanicNilError) RuntimeError() {}
 var panicnil = &godebugInc{name: "panicnil"}
 
 // The implementation of the predeclared function panic.
+// The compiler emits calls to this function.
+//
+// gopanic should be an internal detail,
+// but widely used packages access it using linkname.
+// Notable members of the hall of shame include:
+//   - go.undefinedlabs.com/scopeagent
+//   - github.com/goplus/igop
+//
+// Do not remove or change the type signature.
+// See go.dev/issue/67401.
+//
+//go:linkname gopanic
 func gopanic(e any) {
 	if e == nil {
 		if debug.panicnil.Load() != 1 {
@@ -571,20 +746,20 @@ func gopanic(e any) {
 	gp := getg()
 	if gp.m.curg != gp {
 		print("panic: ")
-		printany(e)
+		printpanicval(e)
 		print("\n")
 		throw("panic on system stack")
 	}
 
 	if gp.m.mallocing != 0 {
 		print("panic: ")
-		printany(e)
+		printpanicval(e)
 		print("\n")
 		throw("panic during malloc")
 	}
 	if gp.m.preemptoff != "" {
 		print("panic: ")
-		printany(e)
+		printpanicval(e)
 		print("\n")
 		print("preempt off reason: ")
 		print(gp.m.preemptoff)
@@ -593,7 +768,7 @@ func gopanic(e any) {
 	}
 	if gp.m.locks != 0 {
 		print("panic: ")
-		printany(e)
+		printpanicval(e)
 		print("\n")
 		throw("panic holding locks")
 	}
@@ -603,13 +778,23 @@ func gopanic(e any) {
 
 	runningPanicDefers.Add(1)
 
-	p.start(getcallerpc(), unsafe.Pointer(getcallersp()))
+	p.start(sys.GetCallerPC(), unsafe.Pointer(sys.GetCallerSP()))
 	for {
 		fn, ok := p.nextDefer()
 		if !ok {
 			break
 		}
 		fn()
+	}
+
+	// If we're tracing, flush the current generation to make the trace more
+	// readable.
+	//
+	// TODO(aktau): Handle a panic from within traceAdvance more gracefully.
+	// Currently it would hang. Not handled now because it is very unlikely, and
+	// already unrecoverable.
+	if traceEnabled() {
+		traceAdvance(false)
 	}
 
 	// ran out of deferred calls - old-school panic now
@@ -632,8 +817,8 @@ func (p *_panic) start(pc uintptr, sp unsafe.Pointer) {
 	// that have been recovered. Also, so that if p is from Goexit, we
 	// can restart its defer processing loop if a recovered panic tries
 	// to jump past it.
-	p.startPC = getcallerpc()
-	p.startSP = unsafe.Pointer(getcallersp())
+	p.startPC = sys.GetCallerPC()
+	p.startSP = unsafe.Pointer(sys.GetCallerSP())
 
 	if p.deferreturn {
 		p.sp = sp
@@ -715,9 +900,15 @@ func (p *_panic) nextDefer() (func(), bool) {
 			return *(*func())(add(p.slotsPtr, i*goarch.PtrSize)), true
 		}
 
+	Recheck:
 		if d := gp._defer; d != nil && d.sp == uintptr(p.sp) {
+			if d.rangefunc {
+				deferconvert(d)
+				popDefer(gp)
+				goto Recheck
+			}
+
 			fn := d.fn
-			d.fn = nil
 
 			// TODO(mdempsky): Instead of having each deferproc call have
 			// its own "deferreturn(); return" sequence, we should just make
@@ -725,8 +916,7 @@ func (p *_panic) nextDefer() (func(), bool) {
 			p.retpc = d.pc
 
 			// Unlink and free.
-			gp._defer = d.link
-			freedefer(d)
+			popDefer(gp)
 
 			return fn, true
 		}
@@ -747,7 +937,7 @@ func (p *_panic) nextFrame() (ok bool) {
 	systemstack(func() {
 		var limit uintptr
 		if d := gp._defer; d != nil {
-			limit = uintptr(d.sp)
+			limit = d.sp
 		}
 
 		var u unwinder
@@ -843,17 +1033,67 @@ func sync_fatal(s string) {
 	fatal(s)
 }
 
+//go:linkname rand_fatal crypto/rand.fatal
+func rand_fatal(s string) {
+	fatal(s)
+}
+
+//go:linkname sysrand_fatal crypto/internal/sysrand.fatal
+func sysrand_fatal(s string) {
+	fatal(s)
+}
+
+//go:linkname fips_fatal crypto/internal/fips140.fatal
+func fips_fatal(s string) {
+	fatal(s)
+}
+
+//go:linkname maps_fatal internal/runtime/maps.fatal
+func maps_fatal(s string) {
+	fatal(s)
+}
+
+//go:linkname internal_sync_throw internal/sync.throw
+func internal_sync_throw(s string) {
+	throw(s)
+}
+
+//go:linkname internal_sync_fatal internal/sync.fatal
+func internal_sync_fatal(s string) {
+	fatal(s)
+}
+
 // throw triggers a fatal error that dumps a stack trace and exits.
 //
 // throw should be used for runtime-internal fatal errors where Go itself,
 // rather than user code, may be at fault for the failure.
 //
+// NOTE: temporarily marked "go:noinline" pending investigation/fix of
+// issue #67274, so as to fix longtest builders.
+//
+// throw should be an internal detail,
+// but widely used packages access it using linkname.
+// Notable members of the hall of shame include:
+//   - github.com/bytedance/sonic
+//   - github.com/cockroachdb/pebble
+//   - github.com/dgraph-io/ristretto
+//   - github.com/outcaste-io/ristretto
+//   - github.com/pingcap/br
+//   - gvisor.dev/gvisor
+//   - github.com/sagernet/gvisor
+//
+// Do not remove or change the type signature.
+// See go.dev/issue/67401.
+//
+//go:linkname throw
 //go:nosplit
 func throw(s string) {
 	// Everything throw does should be recursively nosplit so it
 	// can be called even when it's unsafe to grow the stack.
 	systemstack(func() {
-		print("fatal error: ", s, "\n")
+		print("fatal error: ")
+		printindented(s) // logically printpanicval(s), but avoids convTstring write barrier
+		print("\n")
 	})
 
 	fatalthrow(throwTypeRuntime)
@@ -871,11 +1111,15 @@ func throw(s string) {
 func fatal(s string) {
 	// Everything fatal does should be recursively nosplit so it
 	// can be called even when it's unsafe to grow the stack.
+	printlock() // Prevent multiple interleaved fatal reports. See issue 69447.
 	systemstack(func() {
-		print("fatal error: ", s, "\n")
+		print("fatal error: ")
+		printindented(s) // logically printpanicval(s), but avoids convTstring write barrier
+		print("\n")
 	})
 
 	fatalthrow(throwTypeUser)
+	printunlock()
 }
 
 // runningPanicDefers is non-zero while running deferred functions for panic.
@@ -911,7 +1155,7 @@ func recovery(gp *g) {
 		// frames that we've already processed.
 		//
 		// There's a similar issue with nested panics, when the inner
-		// panic supercedes the outer panic. Again, we end up needing to
+		// panic supersedes the outer panic. Again, we end up needing to
 		// walk the same stack frames.
 		//
 		// These are probably pretty rare occurrences in practice, and
@@ -990,15 +1234,20 @@ func recovery(gp *g) {
 	gp.sched.sp = sp
 	gp.sched.pc = pc
 	gp.sched.lr = 0
-	// fp points to the stack pointer at the caller, which is the top of the
-	// stack frame. The frame pointer used for unwinding is the word
-	// immediately below it.
-	gp.sched.bp = fp - goarch.PtrSize
-	if !usesLR {
+	// Restore the bp on platforms that support frame pointers.
+	// N.B. It's fine to not set anything for platforms that don't
+	// support frame pointers, since nothing consumes them.
+	switch {
+	case goarch.IsAmd64 != 0:
 		// on x86, fp actually points one word higher than the top of
 		// the frame since the return address is saved on the stack by
 		// the caller
-		gp.sched.bp -= goarch.PtrSize
+		gp.sched.bp = fp - 2*goarch.PtrSize
+	case goarch.IsArm64 != 0:
+		// on arm64, the architectural bp points one word higher
+		// than the sp. fp is totally useless to us here, because it
+		// only gets us to the caller's fp.
+		gp.sched.bp = sp - goarch.PtrSize
 	}
 	gp.sched.ret = 1
 	gogo(&gp.sched)
@@ -1010,8 +1259,8 @@ func recovery(gp *g) {
 //
 //go:nosplit
 func fatalthrow(t throwType) {
-	pc := getcallerpc()
-	sp := getcallersp()
+	pc := sys.GetCallerPC()
+	sp := sys.GetCallerSP()
 	gp := getg()
 
 	if gp.m.throwing == throwTypeNone {
@@ -1046,8 +1295,8 @@ func fatalthrow(t throwType) {
 //
 //go:nosplit
 func fatalpanic(msgs *_panic) {
-	pc := getcallerpc()
-	sp := getcallersp()
+	pc := sys.GetCallerPC()
+	sp := sys.GetCallerSP()
 	gp := getg()
 	var docrash bool
 	// Switch to the system stack to avoid any stack growth, which
